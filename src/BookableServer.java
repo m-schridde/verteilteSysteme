@@ -1,4 +1,5 @@
-import java.io.IOException;
+import java.awt.print.Book;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -6,13 +7,16 @@ import java.util.*;
 
 public class BookableServer implements Runnable{
 
-    private LinkedList<BookingObject> booked;
-    private LinkedList<BookingObject> reserved;
-    private LinkedList<BookingObject> toBeDeleted;
-    private DatagramSocket datagramSocket;
+    protected LinkedList<BookingObject> booked;
+    protected LinkedList<BookingObject> reserved;
+    protected LinkedList<BookingObject> toBeDeleted;
+    protected DatagramSocket datagramSocket;
     private boolean gotSocket;
     private DatagramPacket packet;
     private int numberOfSimultaneouslyBookableEntitys;
+    File file;
+    int port;
+    BookableServerTimeoutChecker timeoutChecker;
 
     private static Date stringToDate(String date){
         System.out.println("String to date for String: " + date);
@@ -21,12 +25,39 @@ public class BookableServer implements Runnable{
         System.out.println("Result is: " + result);
         return result;
     }
+    public String composeFileName(){
+        return "bookableServer_" + this.port + "_" + numberOfSimultaneouslyBookableEntitys + ".txt";
+    }
+    private String composeFilePath(){
+        return System.getProperty("user.dir") + File.separator + composeFileName();
+    }
+
+    private boolean createFileOrLoadFile() throws IOException {
+        file = new File(composeFilePath());
+        boolean result;
+        result = file.createNewFile();
+        return result; // true, if file was created, false, if file existed
+    }
+
+    private LinkedList<String> toStrings(){
+        LinkedList<String> strings = new LinkedList<>();
+        String s = this.port + " " + this.numberOfSimultaneouslyBookableEntitys;
+        strings.add(s);
+        strings.add("BOOKED");
+        booked.stream().forEach(bookingObject -> strings.add(bookingObject.toString()));
+        strings.add("RESERVED");
+        reserved.stream().forEach(bookingObject -> strings.add(bookingObject.toString()));
+        strings.add("TBD");
+        toBeDeleted .stream().forEach(bookingObject -> strings.add(bookingObject.toString()));
+        return strings;
+    }
 
     public BookableServer(int port, int numberOfSimultaneouslyBookableEntitys){
         this.booked = new LinkedList<BookingObject>();
         this.reserved = new LinkedList<BookingObject>();
         this.toBeDeleted = new LinkedList<BookingObject>();
         this.numberOfSimultaneouslyBookableEntitys = numberOfSimultaneouslyBookableEntitys;
+        this.port = port;
         int tryCounter = 0;
         gotSocket = false;
         while(tryCounter < 10 && !gotSocket){
@@ -35,6 +66,84 @@ public class BookableServer implements Runnable{
                 datagramSocket = new DatagramSocket(port);
                 gotSocket = true;
             }catch(IOException ioE){ioE.printStackTrace();}
+        }
+        boolean wasFileNewlyCreated = false;
+        try {
+            wasFileNewlyCreated = createFileOrLoadFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if(wasFileNewlyCreated) {
+            writeThisToFile();
+        }else{
+            rebuildFromFile();
+        }
+        timeoutChecker = new BookableServerTimeoutChecker(this);
+        Thread t1 = new Thread(timeoutChecker);
+        t1.start();
+    }
+
+    private void writeThisToFile() {
+        try {
+            PrintWriter writer = new PrintWriter(new FileWriter(composeFilePath()));
+            LinkedList<String> strings = toStrings();
+            strings.forEach(s->{writer.println(s);});
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void recoverFirstLine(String line){
+        String[] words = line.trim().split(" ");
+        int tryCounter = 0;
+        int port = Integer.parseInt(words[0]);
+        gotSocket = false;
+        while(tryCounter < 10 && !gotSocket){
+            tryCounter++;
+            try{
+                this.datagramSocket.close();
+                this.datagramSocket = new DatagramSocket(port);
+                gotSocket = true;
+            }catch(IOException ioE){ioE.printStackTrace();}
+        }
+        this.numberOfSimultaneouslyBookableEntitys = Integer.parseInt(words[1]);
+    }
+
+    private void rebuildFromFile() {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(composeFilePath()));
+            int lineGroup = 0;
+            String line;
+            line = reader.readLine();
+            while(line != null && line.length() > 0){
+                if(lineGroup == 0){
+                    this.recoverFirstLine(line);
+                    lineGroup++;
+                }
+                else if(lineGroup == 1){
+                    if(line.contains("RESERVED")){
+                        lineGroup++;
+                    }else if(line.contains("BOOKED")){
+                    }else{
+                        booked.add(BookingObject.createFromString(line));
+                    }
+                }else if(lineGroup == 2){
+                    if(line.trim().equals("TBD")){
+                        lineGroup++;
+                    }else{
+                        reserved.add(BookingObject.createFromString(line));
+                    }
+                }else if(lineGroup == 3){
+                    toBeDeleted.add(BookingObject.createFromString(line));
+                }
+                line = reader.readLine();
+            }
+            reader.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -198,6 +307,7 @@ public class BookableServer implements Runnable{
                 int port = packet.getPort();
                 DatagramPacket reply = new DatagramPacket(data, data.length, address, port);
                 datagramSocket.send(reply);
+                this.writeThisToFile();
             }catch(IOException ioE){ioE.printStackTrace();}
         }
     }

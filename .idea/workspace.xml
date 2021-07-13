@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="44c53fb3-123a-4ed1-b794-0e94f9b35621" name="Default Changelist" comment="" />
+    <list default="true" id="44c53fb3-123a-4ed1-b794-0e94f9b35621" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/BookableServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/BookableServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/BookingObject.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/BookingObject.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/BooleanWithTimestamp.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/BooleanWithTimestamp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/BrokerServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/BrokerServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/UserRequestObject.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/UserRequestObject.java" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -15,14 +24,24 @@
       </list>
     </option>
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
   <component name="ProjectId" id="1uU2v7xAbAuwktUBJe9m3TAs8di" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../IdeaProjects/AdvIT" />
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.0" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="" />
+    </key>
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -36,7 +55,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Application.BrokerServer">
+  <component name="RunManager" selected="Application.Client2">
     <configuration name="BookableServer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="BookableServer" />
       <module name="verteilteSysteme" />
@@ -58,8 +77,24 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Client2" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="Client2" />
+      <module name="verteilteSysteme" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="Main" />
+      <module name="verteilteSysteme" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.Client2" />
+        <item itemvalue="Application.Main" />
         <item itemvalue="Application.Client" />
         <item itemvalue="Application.BrokerServer" />
         <item itemvalue="Application.BookableServer" />
@@ -77,11 +112,25 @@
       <option name="presentableId" value="Default" />
       <updated>1624706074259</updated>
       <workItem from="1624706079078" duration="7111000" />
-      <workItem from="1625043785892" duration="48124000" />
+      <workItem from="1625043785892" duration="49601000" />
+      <workItem from="1625993219342" duration="25263000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>

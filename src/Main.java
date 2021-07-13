@@ -1,6 +1,6 @@
 public class Main {
     public static void main(String[] args) {
-        int[] portsOfServices = {6998,6999};
+        int[] portsOfServices = {7111,7112};
         BookableServer hotelServer = new BookableServer(portsOfServices[0], 1);
         BookableServer rentalCarServer = new BookableServer(portsOfServices[1], 1);
         Thread t0 = new Thread(hotelServer);

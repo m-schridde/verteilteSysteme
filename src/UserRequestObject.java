@@ -1,9 +1,11 @@
+import javax.xml.crypto.Data;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
 
 public class UserRequestObject {
+    private static final int timeoutMillis = 1000;
     private int id;
     private boolean answerToUserSent;
     private int[] servicePorts;
@@ -18,8 +20,20 @@ public class UserRequestObject {
     DatagramPacket userRequest;
     String[] words;
 
-    private String booleanToTOrF(boolean b){
+    private static String booleanToTOrF(boolean b){
         return b?"t":"f";
+    }
+    public static boolean tOrFToBoolean(String s){
+        s = s.toUpperCase();
+        switch (s){
+            case "T":
+            case "TRUE":
+                return true;
+            case "F":
+            case "FALSE":
+                return false;
+        }
+        return false;
     }
 
     public String toString(){
@@ -56,6 +70,8 @@ public class UserRequestObject {
             me += abortOKReceived[i].toString() + ",";
         }
         me += abortOKReceived[lastIndex].toString() + " ";
+
+        me += userRequest.getAddress().getHostName()  + " " + userRequest.getPort() + " ";
 
         for(String w : words){
             me += w + " ";
@@ -134,7 +150,7 @@ public class UserRequestObject {
             }
             if(stop) return response;//further aborts have to be sent out
             else{//all aborts habe been sent
-                return null; //TODO check for timeouts on abortOks, maybe resend abort
+                return checkAbortOksForTimeout();
             }
             //all aborts have been sent
         }else{
@@ -145,8 +161,7 @@ public class UserRequestObject {
                 }
             }
             if(!allReadyReceived){
-                //TODO check for timeout, maybe resend prepare
-                return null;
+                return checkPrepareForTimeout();
             }
             //all readys werde received
             index = -1;
@@ -155,8 +170,8 @@ public class UserRequestObject {
                 index++;
                 if(!b.isValue()){
                     stop = true;
-                    String abort = "COMMIT " + this.getId();
-                    byte[] data = abort.getBytes();
+                    String commit = "COMMIT " + this.getId();
+                    byte[] data = commit.getBytes();
                     InetAddress address = null;
                     try {
                         address = InetAddress.getByName("localhost");
@@ -169,9 +184,84 @@ public class UserRequestObject {
             }
             if(stop) return response;//further commits are being sent out
             else{//all commits have been sent out
-                return null; //TODO check for timeout on Commits sent, maybe resend commit
+                return checkCommitForTimeout();
             }
 
+        }
+    }
+    private LinkedList<DatagramPacket> checkCommitForTimeout(){
+        LinkedList<DatagramPacket> messages = new LinkedList<>();
+        for(int i = 0; i < commitSent.length; i++){
+            if(commitSent[i].isValue() && !commitOKReceived[i].isValue()) {
+                if (System.currentTimeMillis() - commitSent[i].getTime() > timeoutMillis) {
+                    String commit = "COMMIT " + this.getId();
+                    byte[] data = commit.getBytes();
+                    InetAddress address = null;
+                    try {
+                        address = InetAddress.getByName("localhost");
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    }
+                    messages.add(new DatagramPacket(data, data.length, address, servicePorts[i]));
+                }
+            }
+        }
+        if(messages.size() != 0){
+            return messages;
+        }else{
+            return null;
+        }
+    }
+
+    private LinkedList<DatagramPacket> checkPrepareForTimeout(){
+        LinkedList<DatagramPacket> messages = new LinkedList<>();
+        for(int i = 0; i < preperationSent.length; i++){
+            if(!abortReceived.isValue() && preperationSent[i].isValue() && !readyReceived[i].isValue()) {
+                if (System.currentTimeMillis() - preperationSent[i].getTime() > timeoutMillis) {
+                    String prepare = "";
+                    if(words.length == 3) {
+                        prepare = "PREPARE" + " " + this.getId() + " " + words[1] + " " + words[2] + " " + words[0];
+                    }else if(words.length == 2){
+                        prepare = "PREPARE " + this.getId() + " " + words[1] + " " + words[0];
+                    }
+                    byte[] data = prepare.getBytes();
+                    InetAddress address = null;
+                    try {
+                        address = InetAddress.getByName("localhost");
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    }
+                    messages.add(new DatagramPacket(data, data.length, address, servicePorts[i]));
+                }
+            }
+        }
+        if(messages.size() != 0){
+            return messages;
+        }else{
+            return null;
+        }
+    }
+    private LinkedList<DatagramPacket> checkAbortOksForTimeout(){
+        LinkedList<DatagramPacket> messages = new LinkedList<>();
+        for(int i = 0; i < abortsSent.length; i++){
+            if(abortsSent[i].isValue() && !abortOKReceived[i].isValue()) {
+                if (System.currentTimeMillis() - abortsSent[i].getTime() > timeoutMillis) {
+                    String abort = "ABORT " + this.getId();
+                    byte[] data = abort.getBytes();
+                    InetAddress address = null;
+                    try {
+                        address = InetAddress.getByName("localhost");
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    }
+                    messages.add(new DatagramPacket(data, data.length, address, servicePorts[i]));
+                }
+            }
+        }
+        if(messages.size() != 0){
+            return messages;
+        }else{
+            return null;
         }
     }
 
@@ -201,6 +291,79 @@ public class UserRequestObject {
         }else if(commitSent[index].isValue()){
             commitOKReceived(index);
         }
+    }
+    public static UserRequestObject createFromString(String s, int[] servicePorts){
+        String[] words = s.trim().split(" ");
+        int id = Integer.parseInt(words[0]);
+        boolean answerToUserSent = UserRequestObject.tOrFToBoolean(words[1]);
+        BooleanWithTimestamp[] preperationSent = new BooleanWithTimestamp[servicePorts.length];
+        BooleanWithTimestamp[] readyReceived = new BooleanWithTimestamp[servicePorts.length];
+        BooleanWithTimestamp abortReceived;
+        BooleanWithTimestamp[] commitSent = new BooleanWithTimestamp[servicePorts.length];
+        BooleanWithTimestamp[] commitOKReceived = new BooleanWithTimestamp[servicePorts.length];
+        BooleanWithTimestamp[] abortsSent = new BooleanWithTimestamp[servicePorts.length];
+        BooleanWithTimestamp[] abortOKReceived = new BooleanWithTimestamp[servicePorts.length];
+        int i = 0;
+        for(String bool: words[2].trim().split(",")){
+            preperationSent[i] = BooleanWithTimestamp.createFromString(bool);
+            i++;
+        }
+        i = 0;
+        for(String bool: words[3].trim().split(",")){
+            readyReceived[i] = BooleanWithTimestamp.createFromString(bool);
+            i++;
+        }
+        i = 0;
+        abortReceived = BooleanWithTimestamp.createFromString(words[4]);
+        for(String bool: words[5].trim().split(",")){
+            commitSent[i] = BooleanWithTimestamp.createFromString(bool);
+            i++;
+        }
+        i = 0;
+        for(String bool: words[6].trim().split(",")){
+            commitOKReceived[i] = BooleanWithTimestamp.createFromString(bool);
+            i++;
+        }
+        i = 0;
+        for(String bool: words[7].trim().split(",")){
+            abortsSent[i] = BooleanWithTimestamp.createFromString(bool);
+            i++;
+        }
+        i = 0;
+        for(String bool: words[8].trim().split(",")){
+            abortOKReceived[i] = BooleanWithTimestamp.createFromString(bool);
+            i++;
+        }
+        i = 0;
+        InetAddress address = null;
+        try {
+            address = InetAddress.getByName(words[9]);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        int port = Integer.parseInt(words[10]);
+
+        String[] newWords = new String[words.length-11];
+        for(int index = 11; index < words.length; index++){
+            newWords[index-11] = words[index];
+        }
+        String originalMessage = "";
+        for(String word : newWords){
+            originalMessage += word + " ";
+        }
+        originalMessage = originalMessage.trim();
+        UserRequestObject o = new UserRequestObject(id, servicePorts.length, new DatagramPacket(originalMessage.getBytes(), 0, originalMessage.getBytes().length, address, port),servicePorts);
+        o.answerToUserSent = answerToUserSent;
+        o.preperationSent = preperationSent;
+        o.readyReceived = readyReceived;
+        o.abortReceived = abortReceived;
+        o.commitSent = commitSent;
+        o.commitOKReceived = commitOKReceived;
+        o.abortsSent = abortsSent;
+        o.abortReceived = abortReceived;
+        o.abortOKReceived = abortOKReceived;
+        return o;
+
     }
 
     public UserRequestObject(int id, int numberOfServices, DatagramPacket originPacket, int[] servicePorts) {

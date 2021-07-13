@@ -4,19 +4,70 @@ import java.net.UnknownHostException;
 import java.util.Date;
 
 public class BookingObject {
+    private int id;
+    private int reservationId;
     private boolean committed;
     private boolean approved;
     private Date startDate;
     private Date endDate;
-    private int id;
     private DatagramPacket originPacket;
-    private int reservationId;
+
+    private static String booleanToTOrF(boolean b){
+        return b?"t":"f";
+    }
+    public static boolean tOrFToBoolean(String s){
+        s = s.toUpperCase();
+        switch (s){
+            case "T":
+            case "TRUE":
+                return true;
+            case "F":
+            case "FALSE":
+                return false;
+        }
+        return false;
+    }
+
+    public static BookingObject createFromString(String s){
+        String[] words = s.split(" ");
+        int id = Integer.parseInt(words[0]);
+        int reservationId = Integer.parseInt(words[1]);
+        boolean committed = tOrFToBoolean(words[2]);
+        boolean approved = tOrFToBoolean(words[3]);
+        Date startDate = new Date(Long.parseLong(words[4]));
+        Date endtDate = new Date(Long.parseLong(words[5]));
+        InetAddress address = null;
+        try {
+            address = InetAddress.getByName(words[6]);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        int port = Integer.parseInt(words[7]);
+        String originalMessage = "";
+        for(int i = 8; i<words.length;i++){
+            originalMessage += words[i] + " ";
+        }
+        originalMessage = originalMessage.trim();
+        DatagramPacket packet = new DatagramPacket(originalMessage.getBytes(), 0, originalMessage.getBytes().length, address, port);
+        BookingObject b = new BookingObject(committed, approved, startDate, endtDate, id, packet);
+        b.reservationId = reservationId;
+        return b;
+    }
+
+    public String toString(){
+        String s = this.id + " " + this.reservationId + " " + booleanToTOrF(committed) + " "
+                + booleanToTOrF(approved) + " " + startDate.getTime() + " " + endDate.getTime()
+                + " " + originPacket.getAddress().getHostName() + " " + originPacket.getPort() + " "
+                + new String(originPacket.getData()).trim();
+        return s;
+    }
 
     public BookingObject(boolean committed, boolean approved, Date startDate, Date endDate, int id, DatagramPacket originPacket) {
         this.committed = committed;
         this.approved = approved;
         this.startDate = startDate;
         this.endDate = endDate;
+
         this.id = id;
         try {
             this.originPacket = new DatagramPacket(originPacket.getData(), originPacket.getOffset(), originPacket.getLength(), InetAddress.getByAddress(originPacket.getAddress().getHostName(), originPacket.getAddress().getAddress()), originPacket.getPort());

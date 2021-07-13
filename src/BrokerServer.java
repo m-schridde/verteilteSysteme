@@ -1,5 +1,4 @@
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -8,7 +7,7 @@ import java.util.LinkedList;
 
 public class BrokerServer implements Runnable{
 
-    private DatagramSocket datagramSocket;
+    protected DatagramSocket datagramSocket;
     private boolean gotSocket;
     private int port;
     private int serverId;
@@ -17,8 +16,9 @@ public class BrokerServer implements Runnable{
     private String response;
     private int[] portsOfServices;
     private int nextId;
-    private LinkedList<UserRequestObject> userRequestObjects;
+    protected LinkedList<UserRequestObject> userRequestObjects;
     File file;
+    BrokerServerTimeoutChecker timeoutChecker;
 
 
     private LinkedList<String> toStrings(){
@@ -43,7 +43,7 @@ public class BrokerServer implements Runnable{
     }
 
     private String composeFilePath(){
-        return System.getProperty("user.dir") + System.lineSeparator() + composeFileName();
+        return System.getProperty("user.dir") + File.separator + composeFileName();
     }
 
     private int getNextId(){
@@ -87,14 +87,61 @@ public class BrokerServer implements Runnable{
         }else{
             rebuildFromFile();
         }
+        this.timeoutChecker = new BrokerServerTimeoutChecker(this);
+        Thread t1 = new Thread(timeoutChecker);
+        t1.start();
+    }
+
+    private void recoverFirstLine(String line){
+        String[] words = line.trim().split(" ");
+        this.port = Integer.parseInt(words[0]);
+        this.serverId = Integer.parseInt(words[1]);
+        this.serverCount = Integer.parseInt(words[2]);
+        this.portsOfServices = new int[words.length - 3];
+        for(int i = 3; i < words.length; i++){
+            this.portsOfServices[i-3] = Integer.parseInt(words[i]);
+        }
+    }
+
+    private void recoverSecondLine(String line){
+        this.nextId = Integer.parseInt(line.trim());
     }
 
     private void rebuildFromFile() {
-        //TODO implement
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(composeFilePath()));
+            int index = 0;
+            String line;
+            line = reader.readLine();
+            while(line != null && line.length() > 0){
+                if(index == 0){
+                    this.recoverFirstLine(line);
+                }
+                else if(index == 1){
+                    this.recoverSecondLine(line);
+                }else{
+                    userRequestObjects.add(UserRequestObject.createFromString(line, portsOfServices));
+                }
+                index++;
+                line = reader.readLine();
+            }
+            reader.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void writeThisToFile() {
-        //TODO implement
+        try {
+            PrintWriter writer = new PrintWriter(new FileWriter(composeFilePath()));
+            LinkedList<String> strings = toStrings();
+            strings.forEach(s->{writer.println(s);});
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static Date stringToDate(String date)throws Exception{
@@ -183,6 +230,7 @@ public class BrokerServer implements Runnable{
                             userRequestObject.preperationSent(getIndexFromPort(d.getPort()));
                         }
                         userRequestObjects.add(userRequestObject);
+                        writeThisToFile();
                     } else {
                         response = "Invalid Command, please review the format and contents of what you typed";
                         byte[] data = response.getBytes();
@@ -243,6 +291,7 @@ public class BrokerServer implements Runnable{
                         }
                     }
                     userRequestObjects.add(userRequestObject);
+                    writeThisToFile();
                 }
             }catch(IOException ioE){ioE.printStackTrace();}
         }
