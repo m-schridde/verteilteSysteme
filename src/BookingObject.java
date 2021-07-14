@@ -5,7 +5,7 @@ import java.util.Date;
 
 public class BookingObject {
     private int id;
-    private int reservationId;
+    private int reservationId;//wenn es eine reservierung ist, oder eine direkte buchung ohne reservierung steht hier eine -1
     private boolean committed;
     private boolean approved;
     private Date startDate;
@@ -28,7 +28,7 @@ public class BookingObject {
         return false;
     }
 
-    public static BookingObject createFromString(String s){
+    public static BookingObject createFromString(String s){//rekonstruieren dieses Objects aus einem String
         String[] words = s.split(" ");
         int id = Integer.parseInt(words[0]);
         int reservationId = Integer.parseInt(words[1]);
@@ -54,7 +54,7 @@ public class BookingObject {
         return b;
     }
 
-    public String toString(){
+    public String toString(){ //wir parsen this in einen String welcher im Backup .txt file gespeichert werden kann
         String s = this.id + " " + this.reservationId + " " + booleanToTOrF(committed) + " "
                 + booleanToTOrF(approved) + " " + startDate.getTime() + " " + endDate.getTime()
                 + " " + originPacket.getAddress().getHostName() + " " + originPacket.getPort() + " "
@@ -69,7 +69,7 @@ public class BookingObject {
         this.endDate = endDate;
 
         this.id = id;
-        try {
+        try {//wieder eine deepcopy, damit wir nicht auf volatile daten zugreifen
             this.originPacket = new DatagramPacket(originPacket.getData(), originPacket.getOffset(), originPacket.getLength(), InetAddress.getByAddress(originPacket.getAddress().getHostName(), originPacket.getAddress().getAddress()), originPacket.getPort());
         }catch (UnknownHostException e){e.printStackTrace();};
         reservationId = -1;

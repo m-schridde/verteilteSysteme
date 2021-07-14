@@ -6,7 +6,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 
-public class Client2 {
+public class Client2 {//identisch zu client. lediglich der verwendete broker server ist anders (Port in Zeile 51)
 
     public static DatagramSocket datagramSocket;
     public static boolean gotSocket = false;

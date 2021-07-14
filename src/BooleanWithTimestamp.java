@@ -1,4 +1,4 @@
-public class BooleanWithTimestamp {
+public class BooleanWithTimestamp {//hier wird ein boolean gespeichert sowie die Zeit, zu der er das letzte mal geändert wurde
     private boolean value;
     private long time;
 
