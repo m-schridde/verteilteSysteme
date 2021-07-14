@@ -153,6 +153,9 @@ public class BrokerServer implements Runnable{
             throw new Exception();
         }
         Date result = new Date(year, month, day);
+        if(result.getTime() < System.currentTimeMillis()){
+            throw new Exception();
+        }
         return result;
     }
 
@@ -218,21 +221,24 @@ public class BrokerServer implements Runnable{
                 datagramSocket.receive(packet);
                 String message = new String(packet.getData());
                 message = message.trim();
-                System.out.println(message);
+                System.out.println(this.datagramSocket.getPort() + " received " + message + " from " + packet.getPort());
                 String[] words = message.split(" ");
-                if(isUserMessage(packet)) {
+                if(words[0].equals("PING")){
+                    datagramSocket.send(new DatagramPacket("PONG".getBytes(), "PONG".getBytes().length, packet.getAddress(), packet.getPort()));
+                    System.out.println(this.datagramSocket.getPort() + " sent PONG");
+                }else if(isUserMessage(packet)) {
                     if (isValid(message)) {
                         UserRequestObject userRequestObject = new UserRequestObject(this.getNextId(), this.portsOfServices.length, packet, portsOfServices);
                         LinkedList<DatagramPacket> nextSteps = userRequestObject.whatServerMessagesAreNext();
                         for(DatagramPacket d:nextSteps){
-                            System.out.println("Message form broker to server: " + new String(d.getData()));
+                            System.out.println(this.datagramSocket.getPort() + " sent: " + new String(d.getData()) + " to Port " + d.getPort());
                             datagramSocket.send(d);
                             userRequestObject.preperationSent(getIndexFromPort(d.getPort()));
                         }
                         userRequestObjects.add(userRequestObject);
                         writeThisToFile();
                     } else {
-                        response = "Invalid Command, please review the format and contents of what you typed";
+                        response = "Invalid Command, please review the format and contents of what you typed. Dates must be in the right order and must lie in the Future";
                         byte[] data = response.getBytes();
                         InetAddress address = packet.getAddress();
                         int port = packet.getPort();
@@ -241,8 +247,6 @@ public class BrokerServer implements Runnable{
                     }
                 }else {
                     //server message
-                    System.out.println("Received server Message: " + message);
-
                     int id = Integer.parseInt(words[1]);
                     int index = -1;
                     for(UserRequestObject object: userRequestObjects){
@@ -276,6 +280,7 @@ public class BrokerServer implements Runnable{
                     if(reactions != null){
                         reactions.forEach(d-> {
                             try {
+                                System.out.println(this.datagramSocket.getPort() + "sent: " + new String(d.getData()) + " to Port " + d.getPort());
                                 datagramSocket.send(d);
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -285,6 +290,7 @@ public class BrokerServer implements Runnable{
                     DatagramPacket userResponse = userRequestObject.whatUserMessageIsNext();
                     if(userResponse != null){
                         try {
+                            System.out.println(this.datagramSocket.getPort() + "sent: " + new String(userResponse.getData()) + " to Port " + userResponse.getPort());
                             datagramSocket.send(userResponse);
                         } catch (IOException e) {
                             e.printStackTrace();

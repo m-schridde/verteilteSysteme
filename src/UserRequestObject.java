@@ -5,6 +5,7 @@ import java.net.UnknownHostException;
 import java.util.LinkedList;
 
 public class UserRequestObject {
+    private int prepareTimeoutCounter = 0;
     private static final int timeoutMillis = 1000;
     private int id;
     private boolean answerToUserSent;
@@ -81,8 +82,12 @@ public class UserRequestObject {
 
     public DatagramPacket whatUserMessageIsNext(){
         String message = "";
+        if(answerToUserSent){
+            return null;
+        }
         if(abortReceived.isValue()){
             message = "Die Buchung ist zu diesem Zeitpunkt leider nicht möglich";
+            this.answerToUserSent = true;
 
         }else{
             for(BooleanWithTimestamp b : commitOKReceived){
@@ -91,6 +96,7 @@ public class UserRequestObject {
                 }
             }
             message = "Ihre Anfraga wurde erfolgreich gespeichert. Ihre Reservierungs-/Buchungs-ID lautet: " + this.getId();
+            this.answerToUserSent = true;
         }
         byte[] data = message.getBytes();
         InetAddress address = userRequest.getAddress();
@@ -107,16 +113,11 @@ public class UserRequestObject {
             if(!b.isValue()){
                 stop = true;
                 String prepare = "";
-                System.out.println("Words in User RequestObject before builing prepare message: ");
-                for (int i = 0; i < words.length; i++) {
-                    System.out.println(i + ": " + words[i]);
-                }
                 if(words.length == 3) {
                     prepare = "PREPARE" + " " + this.getId() + " " + words[1] + " " + words[2] + " " + words[0];
                 }else if(words.length == 2){
                     prepare = "PREPARE " + this.getId() + " " + words[1] + " " + words[0];
                 }
-                System.out.println("Prepare message is: " + prepare);
                 byte[] data = prepare.getBytes();
                 InetAddress address = null;
                 try {
@@ -214,10 +215,15 @@ public class UserRequestObject {
     }
 
     private LinkedList<DatagramPacket> checkPrepareForTimeout(){
+        if(prepareTimeoutCounter > 10){//wenn 10 mal keine antwort kam, dann wird aborted
+            this.abortReceived.setValue(true);
+            return null;
+        }
         LinkedList<DatagramPacket> messages = new LinkedList<>();
         for(int i = 0; i < preperationSent.length; i++){
             if(!abortReceived.isValue() && preperationSent[i].isValue() && !readyReceived[i].isValue()) {
                 if (System.currentTimeMillis() - preperationSent[i].getTime() > timeoutMillis) {
+                    prepareTimeoutCounter ++;
                     String prepare = "";
                     if(words.length == 3) {
                         prepare = "PREPARE" + " " + this.getId() + " " + words[1] + " " + words[2] + " " + words[0];
@@ -378,8 +384,7 @@ public class UserRequestObject {
         this.abortOKReceived = new BooleanWithTimestamp[numberOfServices];
         try {
             this.userRequest = new DatagramPacket(originPacket.getData(), originPacket.getOffset(), originPacket.getLength(), InetAddress.getByAddress(originPacket.getAddress().getHostName(), originPacket.getAddress().getAddress()), originPacket.getPort());
-        }catch (UnknownHostException e){e.printStackTrace();};
-        System.out.println(originPacket.getData().toString());
+        }catch (UnknownHostException e){e.printStackTrace();}
         words = new String(this.userRequest.getData()).toString().trim().split(" ");
         for(int i = 0; i < words.length; i++){
             words[i] = words[i].trim();

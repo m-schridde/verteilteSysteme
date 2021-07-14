@@ -19,10 +19,8 @@ public class BookableServer implements Runnable{
     BookableServerTimeoutChecker timeoutChecker;
 
     private static Date stringToDate(String date){
-        System.out.println("String to date for String: " + date);
         String[] split = date.split("-");
         Date result = new Date(Integer.parseInt(split[0])-1900, Integer.parseInt(split[1].trim()) - 1, Integer.parseInt(split[2].trim()));
-        System.out.println("Result is: " + result);
         return result;
     }
     public String composeFileName(){
@@ -167,10 +165,6 @@ public class BookableServer implements Runnable{
     }
 
     private String handlePrepare(String[] words){
-        System.out.println("Handle Prepare for words: ");
-        for(String word:words){
-            System.out.println(word);
-        }
         String response = "";
         int id = Integer.parseInt(words[1]);
         if(words.length == 5) {
@@ -286,11 +280,13 @@ public class BookableServer implements Runnable{
                 datagramSocket.receive(packet);
                 String message = new String(packet.getData());
                 message = message.trim();
-                System.out.println("Message received: ");
-                System.out.println(message);
+                System.out.println(this.port + " received: " + message + " from " + packet.getPort());
                 String[] words = message.split("\\s");
                 String response = "ABORT";
                 switch (words[0]){
+                    case "PING":
+                        response = handelePing();
+                        break;
                     case "PREPARE":
                         response = handlePrepare(words);
                         break;
@@ -306,10 +302,15 @@ public class BookableServer implements Runnable{
                 InetAddress address = packet.getAddress();
                 int port = packet.getPort();
                 DatagramPacket reply = new DatagramPacket(data, data.length, address, port);
+                System.out.println(this.port + " sent " + response + " to " + reply.getPort());
                 datagramSocket.send(reply);
                 this.writeThisToFile();
             }catch(IOException ioE){ioE.printStackTrace();}
         }
+    }
+
+    private String handelePing() {
+        return "PONG";
     }
 
     public static void main(String[] args) {
