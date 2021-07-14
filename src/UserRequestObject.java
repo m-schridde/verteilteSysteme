@@ -95,7 +95,7 @@ public class UserRequestObject {
                     return null;
                 }
             }
-            message = "Ihre Anfraga wurde erfolgreich gespeichert. Ihre Reservierungs-/Buchungs-ID lautet: " + this.getId();
+            message = "Ihre Anfrage wurde erfolgreich gespeichert. Ihre Reservierungs-/Buchungs-ID lautet: " + this.getId();
             this.answerToUserSent = true;
         }
         byte[] data = message.getBytes();

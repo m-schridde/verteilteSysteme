@@ -76,17 +76,6 @@ public class BookingObject {
     }
 
 
-/*
-    public BookingObject(BookingObject original)  {
-        this.committed = original.isCommitted();
-        this.approved = original.isApproved();
-        this.startDate = new Date(original.getStartDate().getTime());
-        this.endDate = new Date(original.getEndDate().getTime());
-        this.id = original.getId();
-        try {
-            this.originPacket = new DatagramPacket(original.getOriginPacket().getData(), original.getOriginPacket().getOffset(), original.getOriginPacket().getLength(), InetAddress.getByAddress(original.getOriginPacket().getAddress().getHostName(), original.getOriginPacket().getAddress().getAddress()), original.getOriginPacket().getPort());
-        }catch (UnknownHostException e){e.printStackTrace();}
-    }*/
 
     public int getReservationId() {
         return reservationId;

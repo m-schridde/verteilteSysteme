@@ -177,16 +177,12 @@ public class BrokerServer implements Runnable{
             }
             return true;
         }else if(words.length == 2){
-            if (!(words[0].equals("RESERVE") || words[0].equals("BOOK"))){
+            if (!words[0].equals("BOOK")){
                 return false;
             }
             try{
                 int reservationId = Integer.parseInt(words[1]);
-                boolean result = false;
-                for(int i = 0; i < userRequestObjects.size(); i++){
-                    result = (userRequestObjects.get(i).getId() == reservationId);
-                }
-                return result;
+                return true;
             }catch(Exception e){
                 return false;
             }
@@ -221,17 +217,17 @@ public class BrokerServer implements Runnable{
                 datagramSocket.receive(packet);
                 String message = new String(packet.getData());
                 message = message.trim();
-                System.out.println(this.datagramSocket.getPort() + " received " + message + " from " + packet.getPort());
+                System.out.println(this.port + " received " + message + " from " + packet.getPort());
                 String[] words = message.split(" ");
                 if(words[0].equals("PING")){
                     datagramSocket.send(new DatagramPacket("PONG".getBytes(), "PONG".getBytes().length, packet.getAddress(), packet.getPort()));
-                    System.out.println(this.datagramSocket.getPort() + " sent PONG");
+                    System.out.println(this.port + " sent PONG");
                 }else if(isUserMessage(packet)) {
                     if (isValid(message)) {
                         UserRequestObject userRequestObject = new UserRequestObject(this.getNextId(), this.portsOfServices.length, packet, portsOfServices);
                         LinkedList<DatagramPacket> nextSteps = userRequestObject.whatServerMessagesAreNext();
                         for(DatagramPacket d:nextSteps){
-                            System.out.println(this.datagramSocket.getPort() + " sent: " + new String(d.getData()) + " to Port " + d.getPort());
+                            System.out.println(this.port + " sent: " + new String(d.getData()) + " to Port " + d.getPort());
                             datagramSocket.send(d);
                             userRequestObject.preperationSent(getIndexFromPort(d.getPort()));
                         }
@@ -280,7 +276,7 @@ public class BrokerServer implements Runnable{
                     if(reactions != null){
                         reactions.forEach(d-> {
                             try {
-                                System.out.println(this.datagramSocket.getPort() + "sent: " + new String(d.getData()) + " to Port " + d.getPort());
+                                System.out.println(this.port + "sent: " + new String(d.getData()) + " to Port " + d.getPort());
                                 datagramSocket.send(d);
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -290,7 +286,7 @@ public class BrokerServer implements Runnable{
                     DatagramPacket userResponse = userRequestObject.whatUserMessageIsNext();
                     if(userResponse != null){
                         try {
-                            System.out.println(this.datagramSocket.getPort() + "sent: " + new String(userResponse.getData()) + " to Port " + userResponse.getPort());
+                            System.out.println(this.port + "sent: " + new String(userResponse.getData()) + " to Port " + userResponse.getPort());
                             datagramSocket.send(userResponse);
                         } catch (IOException e) {
                             e.printStackTrace();
