@@ -3,11 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="44c53fb3-123a-4ed1-b794-0e94f9b35621" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/BrokerServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/BrokerServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Client2.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Client2.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/UserRequestObject.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/UserRequestObject.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -31,7 +26,7 @@
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../IdeaProjects/AdvIT" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../AktienApp/aktien-app-backend" />
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.0" />
@@ -111,7 +106,7 @@
       <updated>1624706074259</updated>
       <workItem from="1624706079078" duration="7111000" />
       <workItem from="1625043785892" duration="49601000" />
-      <workItem from="1625993219342" duration="36757000" />
+      <workItem from="1625993219342" duration="40075000" />
     </task>
     <servers />
   </component>
